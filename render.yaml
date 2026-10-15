@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: nightterm-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: CORS_ORIGINS
+        value: https://mjanthony819.github.io,http://localhost:3000
