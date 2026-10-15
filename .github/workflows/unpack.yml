@@ -1,0 +1,22 @@
+name: unpack
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  unpack:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          set -e
+          f=$(ls *bundle.zip)
+          mkdir /tmp/x && unzip -q "$f" -d /tmp/x
+          git rm -q "$f"
+          cp -a /tmp/x/proj/. .
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Initial commit: NIGHTTERM, NSE terminal"
+          git push
