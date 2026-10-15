@@ -1,0 +1,13 @@
+name: keepalive
+# Optional. Render's free tier sleeps after ~15 min idle; this pings /health so the first
+# visitor does not wait a minute. Delete this file if you do not want it.
+on:
+  schedule:
+    - cron: "*/14 * * * *"
+  workflow_dispatch:
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          if [ -n "${{ vars.API_URL }}" ]; then curl -fsS --max-time 60 "${{ vars.API_URL }}/health" || true; fi
