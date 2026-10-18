@@ -11,13 +11,13 @@ class TTLCache:
 
     def get(self, key: str, ttl: float):
         hit = self._d.get(key)
-        if hit and time.time() - hit[0] < ttl:
+        if hit and time.monotonic() - hit[0] < ttl:
             return hit[1]
         return None
 
     def stale(self, key: str, max_age: float):
         hit = self._d.get(key)
-        if hit and time.time() - hit[0] < max_age:
+        if hit and time.monotonic() - hit[0] < max_age:
             return hit[1]
         return None
 
@@ -26,7 +26,7 @@ class TTLCache:
             oldest = sorted(self._d.items(), key=lambda kv: kv[1][0])[: self.max_items // 4]
             for k, _ in oldest:
                 self._d.pop(k, None)
-        self._d[key] = (time.time(), value)
+        self._d[key] = (time.monotonic(), value)
 
     def lock(self, key: str) -> asyncio.Lock:
         return self._locks.setdefault(key, asyncio.Lock())
