@@ -189,3 +189,42 @@ def test_pending_daily_bar_is_flagged_and_filled_from_intraday():
         "open": [10, 11, None], "high": [12, 15, None], "low": [9, 10, None], "close": [11, 14, None], "volume": [3, 4, None]}]}}]}}
     b = yahoo.bar_from_intraday(intra, 200)
     assert b == {"t": 200, "o": 10, "h": 15, "l": 9, "c": 14, "v": 7}
+
+
+def test_search_endpoint(client):
+    r = client.get("/search", params={"q": "tata"}).json()
+    assert r["results"] and r["results"][0]["symbol"].startswith("TATA")
+    assert "hint" in r
+    assert client.get("/search", params={"q": ""}).json()["results"] == []
+    assert client.get("/search", params={"q": "zzzzzz"}).json()["results"] == []
+
+
+def test_parse_rss_edge_cases():
+    # no pubDate -> ts None, sorts after dated items; missing title -> skipped; whitespace collapsed
+    xml = """<?xml version="1.0"?><rss><channel>
+    <item><title>No date here - Src</title><link>https://x.example/1</link></item>
+    <item><title>Dated   with   spaces - Src</title><link>https://x.example/2</link><pubDate>Thu, 15 Oct 2026 10:00:00 GMT</pubDate></item>
+    <item><link>https://x.example/3</link></item>
+    </channel></rss>"""
+    items = news.parse_rss(xml)
+    assert [i["title"] for i in items] == ["Dated with spaces", "No date here"]
+    assert items[0]["ts"] is not None and items[1]["ts"] is None
+
+
+def test_parse_rss_respects_limit():
+    xml = '<?xml version="1.0"?><rss><channel>' + "".join(
+        f'<item><title>H{i:02d} - S</title><link>https://x.example/{i}</link>'
+        f'<pubDate>Thu, 15 Oct 2026 10:00:00 GMT</pubDate></item>'
+        for i in range(50)) + "</channel></rss>"
+    assert len(news.parse_rss(xml, limit=10)) == 10
+
+
+def test_cache_evicts_oldest_quarter_at_capacity_and_reuses_locks():
+    c = TTLCache(max_items=4)
+    for i in range(4):
+        c.put(f"k{i}", i)
+    c.put("k4", 4)  # over capacity: oldest quarter (4 // 4 = 1 entry) is evicted
+    assert "k0" not in c._d
+    assert len(c._d) == 4
+    assert c.get("k4", 60) == 4
+    assert c.lock("a") is c.lock("a")  # same key, same lock: single-flight depends on it
