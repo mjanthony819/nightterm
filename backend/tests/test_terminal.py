@@ -228,3 +228,71 @@ def test_cache_evicts_oldest_quarter_at_capacity_and_reuses_locks():
     assert len(c._d) == 4
     assert c.get("k4", 60) == 4
     assert c.lock("a") is c.lock("a")  # same key, same lock: single-flight depends on it
+
+
+class _Resp:
+    def __init__(self, status, payload=None):
+        self.status_code = status
+        self._payload = payload or {}
+
+    def json(self):
+        return self._payload
+
+
+class _FlakyClient:
+    """Scripted stand-in for httpx.AsyncClient: plays back statuses/exceptions in order."""
+    def __init__(self, script):
+        self.script = list(script)
+        self.urls = []
+
+    async def get(self, url, **kwargs):
+        self.urls.append(url)
+        step = self.script.pop(0)
+        if isinstance(step, Exception):
+            raise step
+        return step
+
+
+def test_get_404_raises_immediately_without_retrying():
+    client = _FlakyClient([_Resp(404)])
+    with pytest.raises(yahoo.UpstreamError):
+        asyncio.run(yahoo._get(client, "ZZZ.NS", "1d", "5m"))
+    assert len(client.urls) == 1  # an unknown symbol is not a transient error
+
+
+def test_get_fails_over_to_second_host_on_500():
+    ok = _Resp(200, {"chart": {"result": [{"meta": {}}]}})
+    client = _FlakyClient([_Resp(500), ok])
+    out = asyncio.run(yahoo._get(client, "TCS.NS", "1d", "5m"))
+    assert out == ok.json()
+    assert client.urls[0].startswith(yahoo.HOSTS[0]) and client.urls[1].startswith(yahoo.HOSTS[1])
+
+
+def test_get_raises_upstream_error_after_all_attempts_fail():
+    client = _FlakyClient([_Resp(500), _Resp(502), _Resp(503)])
+    with pytest.raises(yahoo.UpstreamError):
+        asyncio.run(yahoo._get(client, "TCS.NS", "1d", "5m"))
+    assert len(client.urls) == 3  # bounded retries, never an infinite loop
+
+
+def test_get_retries_network_errors_on_the_other_host():
+    ok = _Resp(200, {"chart": {"result": []}})
+    client = _FlakyClient([OSError("conn reset"), ok])
+    out = asyncio.run(yahoo._get(client, "TCS.NS", "1d", "5m"))
+    assert out == ok.json() and len(client.urls) == 2
+
+
+def test_parse_quote_sums_intraday_volume_when_meta_volume_missing():
+    p = {"chart": {"result": [{"meta": {"regularMarketPrice": 10.0},
+        "indicators": {"quote": [{"close": [9.0, 10.0], "volume": [100, None, 250]}]}}]}}
+    assert yahoo.parse_quote(p, "X.NS")["volume"] == 350.0
+    p2 = {"chart": {"result": [{"meta": {"regularMarketPrice": 10.0},
+        "indicators": {"quote": [{"close": [9.0, 10.0], "volume": [None, None]}]}}]}}
+    assert yahoo.parse_quote(p2, "X.NS")["volume"] is None
+
+
+def test_bar_from_intraday_returns_none_when_every_row_is_null():
+    p = {"chart": {"result": [{"meta": {}, "timestamp": [1, 2], "indicators": {"quote": [{
+        "open": [None, None], "high": [None, None], "low": [None, None],
+        "close": [None, None], "volume": [None, None]}]}}]}}
+    assert yahoo.bar_from_intraday(p, 200) is None
