@@ -1,4 +1,5 @@
 import asyncio
+import time
 
 import pytest
 from fastapi.testclient import TestClient
@@ -296,3 +297,34 @@ def test_bar_from_intraday_returns_none_when_every_row_is_null():
         "open": [None, None], "high": [None, None], "low": [None, None],
         "close": [None, None], "volume": [None, None]}]}}]}}
     assert yahoo.bar_from_intraday(p, 200) is None
+
+
+def test_quotes_serves_stale_quote_when_upstream_fails(client, monkeypatch):
+    fresh = client.get("/quotes", params={"symbols": "TCS"}).json()
+    assert "stale" not in fresh["quotes"][0]  # live answers are not flagged
+    q = yahoo.parse_quote(CHART, "TCS.NS")
+    # Older than QUOTE_TTL (45s) but within the stale window, as after a cold deploy.
+    main.cache._d["q:TCS.NS"] = (time.monotonic() - 100, q)
+
+    async def down(_client, sym):
+        raise yahoo.UpstreamError("upstream 500")
+    monkeypatch.setattr(yahoo, "fetch_quote", down)
+    r = client.get("/quotes", params={"symbols": "TCS"}).json()
+    assert r["quotes"][0]["symbol"] == "TCS" and r["quotes"][0]["stale"] is True
+    assert r["missing"] == []  # a stale quote is still a quote, not a miss
+
+
+def test_history_serves_stale_bars_when_upstream_fails(client, monkeypatch):
+    fresh = client.get("/history", params={"symbol": "TCS", "range": "1Y"}).json()
+    assert fresh["stale"] is False
+    data = yahoo.parse_history(CHART)
+    data.update(symbol="TCS", range="1Y", interval="1d", intraday=False)
+    # Older than HIST_TTL_DAILY (1800s), inside the 3600s stale window.
+    main.cache._d["h:TCS.NS:1Y"] = (time.monotonic() - 2000, data)
+
+    async def down(_client, sym, label):
+        raise yahoo.UpstreamError("upstream 500")
+    monkeypatch.setattr(yahoo, "fetch_history", down)
+    r = client.get("/history", params={"symbol": "TCS", "range": "1Y"})
+    assert r.status_code == 200 and r.json()["stale"] is True
+    assert len(r.json()["bars"]) == 4
