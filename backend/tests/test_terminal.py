@@ -328,3 +328,42 @@ def test_history_serves_stale_bars_when_upstream_fails(client, monkeypatch):
     r = client.get("/history", params={"symbol": "TCS", "range": "1Y"})
     assert r.status_code == 200 and r.json()["stale"] is True
     assert len(r.json()["bars"]) == 4
+
+
+def test_search_ranks_prefix_hits_first_and_respects_limit():
+    hits = universe.search("BAJAJ")
+    assert [h["symbol"] for h in hits] == ["BAJAJ-AUTO", "BAJAJFINSV", "BAJFINANCE"]
+    assert universe.search("TCS")[0]["symbol"] == "TCS"  # exact prefix beats any name match
+    five = universe.search("A", limit=5)
+    assert len(five) == 5 and all(h["symbol"].startswith("A") for h in five)
+
+
+def test_parse_quote_prev_close_fallback_and_zero_prev():
+    p = {"chart": {"result": [{"meta": {"regularMarketPrice": 105.0, "previousClose": 100.0},
+        "indicators": {"quote": [{"close": [104.0, 105.0]}]}}]}}
+    q = yahoo.parse_quote(p, "X.NS")
+    assert q["prev_close"] == 100.0 and q["change"] == 5.0 and q["change_pct"] == 5.0
+    zero = {"chart": {"result": [{"meta": {"regularMarketPrice": 105.0, "chartPreviousClose": 0},
+        "indicators": {"quote": [{"close": [105.0]}]}}]}}
+    q2 = yahoo.parse_quote(zero, "X.NS")
+    assert q2["change"] is None and q2["change_pct"] is None  # never divide by a zero prev close
+
+
+def test_downsample_passes_short_lists_through_untouched():
+    xs = [float(i) for i in range(10)]
+    assert yahoo._downsample(xs, 48) == xs
+
+
+def test_quotes_with_only_invalid_symbols_is_200_with_missing(client):
+    r = client.get("/quotes", params={"symbols": "<x>,a b"})
+    assert r.status_code == 200
+    j = r.json()
+    assert j["quotes"] == [] and sorted(j["missing"]) == ["<X>", "A B"]
+
+
+def test_history_unexpected_error_is_502_not_404(client, monkeypatch):
+    async def boom(_client, sym, label):
+        raise RuntimeError("yahoo changed their payload")
+    monkeypatch.setattr(yahoo, "fetch_history", boom)
+    r = client.get("/history", params={"symbol": "TCS", "range": "1M"})
+    assert r.status_code == 502  # an unknown symbol is 404; a broken upstream is 502
