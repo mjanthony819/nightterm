@@ -367,3 +367,36 @@ def test_history_unexpected_error_is_502_not_404(client, monkeypatch):
     monkeypatch.setattr(yahoo, "fetch_history", boom)
     r = client.get("/history", params={"symbol": "TCS", "range": "1M"})
     assert r.status_code == 502  # an unknown symbol is 404; a broken upstream is 502
+
+
+def test_stale_beyond_window_reraises_the_upstream_error():
+    c = TTLCache()
+    c._d["k"] = (time.monotonic() - 4000, "old")  # beyond the default 3600s stale window
+
+    async def boom():
+        raise RuntimeError("down")
+
+    async def run():
+        with pytest.raises(RuntimeError):
+            await c.fetch("k", 60, boom)  # too old even for stale: the failure must surface
+    asyncio.run(run())
+
+
+def test_parse_rss_keeps_plain_http_links():
+    xml = """<?xml version="1.0"?><rss><channel>
+    <item><title>Http link kept - Src</title><link>http://x.example/1</link></item>
+    <item><title>Schemeless dropped - Src</title><link>ftp://x.example/2</link></item>
+    </channel></rss>"""
+    items = news.parse_rss(xml)
+    assert [i["title"] for i in items] == ["Http link kept"]  # http/https only, no exotic schemes
+
+
+def test_symbol_query_quotes_the_name_and_bounds_recency():
+    assert news.symbol_query("Tata Consultancy Services") == '"Tata Consultancy Services" stock when:7d'
+
+
+def test_normalize_accepts_lowercase_suffix_and_display_strips_ns_only():
+    assert universe.normalize("tcs.ns") == "TCS.NS"
+    assert universe.normalize("reliance.bo") == "RELIANCE.BO"
+    assert universe.display("TCS.NS") == "TCS"
+    assert universe.display("^NSEI") == "^NSEI"  # indices keep their caret
