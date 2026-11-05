@@ -25,16 +25,16 @@ export default function ChartPanel({ symbol, range, onRange, quote, tick, onWake
       if (dead || !el.current) return;
       const chart = lc.createChart(el.current, {
         autoSize: true,
-        layout: { background: { type: lc.ColorType.Solid, color: "#070c16" }, textColor: "#8494a9", fontFamily: "Space Mono, monospace", fontSize: 11 },
-        grid: { vertLines: { color: "#0e1726" }, horzLines: { color: "#0e1726" } },
-        rightPriceScale: { borderColor: "#1a2839", scaleMargins: { top: 0.06, bottom: 0.24 } },
-        timeScale: { borderColor: "#1a2839", rightOffset: 4, timeVisible: false, secondsVisible: false },
-        crosshair: { mode: 0, vertLine: { color: "#3aa4ff55", labelBackgroundColor: "#1663b8" }, horzLine: { color: "#3aa4ff55", labelBackgroundColor: "#1663b8" } },
+        layout: { background: { type: lc.ColorType.Solid, color: "#111113" }, textColor: "#9A9AA2", fontFamily: "Space Mono, monospace", fontSize: 11 },
+        grid: { vertLines: { color: "#131316" }, horzLines: { color: "#131316" } },
+        rightPriceScale: { borderColor: "#2E2E33", scaleMargins: { top: 0.06, bottom: 0.24 } },
+        timeScale: { borderColor: "#2E2E33", rightOffset: 4, timeVisible: false, secondsVisible: false },
+        crosshair: { mode: 0, vertLine: { color: "#C6F43255", labelBackgroundColor: "#7FA11C" }, horzLine: { color: "#C6F43255", labelBackgroundColor: "#7FA11C" } },
         handleScale: { axisPressedMouseMove: true }, handleScroll: { vertTouchDrag: false },
       });
       const candle = chart.addCandlestickSeries({
         upColor: "#4fd1a0", downColor: "#ff6b7a", borderUpColor: "#4fd1a0", borderDownColor: "#ff6b7a",
-        wickUpColor: "#4fd1a0", wickDownColor: "#ff6b7a", priceLineColor: "#3aa4ff",
+        wickUpColor: "#4fd1a0", wickDownColor: "#ff6b7a", priceLineColor: "#C6F432",
       });
       const volume = chart.addHistogramSeries({ priceFormat: { type: "volume" }, priceScaleId: "vol", priceLineVisible: false, lastValueVisible: false });
       chart.priceScale("vol").applyOptions({ scaleMargins: { top: 0.82, bottom: 0 } });
@@ -94,7 +94,7 @@ export default function ChartPanel({ symbol, range, onRange, quote, tick, onWake
         <div className="ml-auto flex gap-1" role="group" aria-label="Range">
           {RANGES.map((r) => (
             <button type="button" key={r} onClick={() => onRange(r)} aria-pressed={r === range}
-              className={`min-h-[36px] sm:min-h-[24px] px-2 border text-[10px] ${r === range ? "border-blue text-ink bg-[#0f2036]" : "border-transparent text-dim hover:text-ink"}`}>{r}</button>
+              className={`min-h-[36px] sm:min-h-[24px] px-2 border text-[10px] ${r === range ? "border-blue text-ink bg-[#20230F]" : "border-transparent text-dim hover:text-ink"}`}>{r}</button>
           ))}
         </div>
       </div>
