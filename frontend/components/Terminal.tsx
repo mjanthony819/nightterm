@@ -180,8 +180,8 @@ export default function Terminal() {
     <main className="min-h-screen lg:h-screen flex flex-col px-2 sm:px-3 py-2 gap-2 mx-auto max-w-[1760px] lg:overflow-hidden">
       <header className="flex flex-wrap items-center gap-x-5 gap-y-1">
         <h1 className="flex items-baseline gap-3 leading-none">
-          <span className="font-pixel text-[11px] text-ink">NIGHTTERM</span>
-          <span className="font-doto text-blue text-lg font-bold">NSE<span className="blink">_</span></span>
+          <span className="font-serif italic text-[24px] text-ink">Nightterm</span>
+          <span className="font-serif italic text-blue text-lg">NSE<span className="blink">_</span></span>
         </h1>
         <div className="flex gap-x-4 gap-y-0.5 flex-wrap text-[11px]" aria-label="Indices">
           {indices.map((i) => { const q = quotes[i.symbol]; return (
@@ -209,7 +209,7 @@ export default function Terminal() {
       <nav className="lg:hidden grid grid-cols-4 gap-1" aria-label="Panels">
         {tabs.map((t, i) => (
           <button type="button" key={t} onClick={() => setFocus(i + 1)} aria-pressed={focus === i + 1}
-            className={`min-h-[44px] border text-[11px] uppercase ${focus === i + 1 ? "border-blue text-ink bg-[#0f2036]" : "border-line-soft text-dim"}`}>
+            className={`min-h-[44px] border text-[11px] uppercase ${focus === i + 1 ? "border-blue text-ink bg-[#20230F]" : "border-line-soft text-dim"}`}>
             <span className="font-pixel text-[8px] mr-1.5">{i + 1}</span>{t}
           </button>
         ))}
