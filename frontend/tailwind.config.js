@@ -3,12 +3,14 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        bg: "#05080f", panel: "#070c16", line: "#14202f", "line-soft": "#1a2839",
-        ink: "#dde6f2", body: "#bcc8d9", dim: "#8494a9", faint: "#54637a",
-        blue: "#3aa4ff", "blue-deep": "#1663b8", up: "#4fd1a0", down: "#ff6b7a", amber: "#e8b24a",
+        bg: "#0B0B0C", panel: "#111113", line: "#232326", "line-soft": "#2E2E33",
+        ink: "#FFFFFF", body: "#D8D8DC", dim: "#9A9AA2", faint: "#6B6B73",
+        blue: "#C6F432", "blue-deep": "#7FA11C", up: "#4fd1a0", down: "#ff6b7a", amber: "#e8b24a",
       },
       fontFamily: {
-        pixel: ["'Press Start 2P'", "monospace"],
+        serif: ["'Instrument Serif'", "Georgia", "serif"],
+        sans: ["Inter", "system-ui", "sans-serif"],
+        pixel: ["Inter", "system-ui", "sans-serif"],
         doto: ["Doto", "monospace"],
         mono: ["'Space Mono'", "ui-monospace", "monospace"],
       },
