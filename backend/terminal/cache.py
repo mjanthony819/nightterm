@@ -26,6 +26,7 @@ class TTLCache:
             oldest = sorted(self._d.items(), key=lambda kv: kv[1][0])[: self.max_items // 4]
             for k, _ in oldest:
                 self._d.pop(k, None)
+                self._locks.pop(k, None)  # drop the evicted key's lock too, else _locks grows unbounded
         self._d[key] = (time.monotonic(), value)
 
     def lock(self, key: str) -> asyncio.Lock:
