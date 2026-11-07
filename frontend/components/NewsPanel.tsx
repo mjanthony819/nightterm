@@ -21,7 +21,7 @@ export default function NewsPanel({ items, loading, err, scope, symbol, onScope,
         {!err && loading && !items.length && <p className="p-3 text-faint">loading headlines<span className="blink">_</span></p>}
         {items.map((n, i) => (
           <a key={n.link} href={n.link} target="_blank" rel="noopener noreferrer" data-on={i === active}
-            className={`block px-3 py-2 border-b border-[#1A1A1E] hover:bg-[#17181C] ${i === active ? "bg-[#20230F] shadow-[inset_2px_0_#C6F432]" : ""}`}>
+            className={`block px-3 py-2 border-b border-[#211011] hover:bg-[#1E0F10] ${i === active ? "bg-[#2A1208] shadow-[inset_2px_0_#FEED65]" : ""}`}>
             <span className="block text-ink leading-snug">{n.title}</span>
             <span className="block text-[10px] text-faint mt-0.5">{n.source}{n.source && n.ts ? " · " : ""}{ago(n.ts)}{n.ts ? " ago" : ""}</span>
           </a>
