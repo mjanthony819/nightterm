@@ -42,7 +42,7 @@ const CommandBar = forwardRef<HTMLInputElement, {
   };
   return (
     <div ref={root} className="relative" style={{ zIndex: open ? 40 : undefined }}>
-      <div className="flex items-center gap-2 border border-line-soft bg-[#0B0B0C] px-3 focus-within:border-blue">
+      <div className="flex items-center gap-2 border border-line-soft bg-[#0E0607] px-3 focus-within:border-blue">
         <span className="font-pixel text-[9px] text-blue shrink-0" aria-hidden="true">NIGHT&gt;</span>
         <input ref={input} value={text} aria-label="Command line: type a symbol, or add / rm SYMBOL" role="combobox" aria-expanded={open && opts.length > 0}
           aria-controls={`${id}-l`} aria-activedescendant={active >= 0 ? `${id}-${active}` : undefined} aria-autocomplete="list"
@@ -58,7 +58,7 @@ const CommandBar = forwardRef<HTMLInputElement, {
           {opts.map((o, i) => (
             <button type="button" key={o.value} id={`${id}-${i}`} role="option" aria-selected={i === active} tabIndex={-1}
               onMouseDown={(e) => e.preventDefault()} onClick={() => run(o.value)}
-              className={`flex w-full items-baseline justify-between gap-3 px-3 min-h-[44px] sm:min-h-[30px] text-left border-b border-line ${i === active ? "bg-[#24270F] text-white" : "text-ink hover:bg-[#24270F]"}`}>
+              className={`flex w-full items-baseline justify-between gap-3 px-3 min-h-[44px] sm:min-h-[30px] text-left border-b border-line ${i === active ? "bg-[#33160A] text-white" : "text-ink hover:bg-[#33160A]"}`}>
               <span>{o.value}</span>
               <span className="text-[10px] text-dim truncate">{o.detail}</span>
             </button>
