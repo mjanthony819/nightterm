@@ -209,7 +209,7 @@ export default function Terminal() {
       <nav className="lg:hidden grid grid-cols-4 gap-1" aria-label="Panels">
         {tabs.map((t, i) => (
           <button type="button" key={t} onClick={() => setFocus(i + 1)} aria-pressed={focus === i + 1}
-            className={`min-h-[44px] border text-[11px] uppercase ${focus === i + 1 ? "border-blue text-ink bg-[#20230F]" : "border-line-soft text-dim"}`}>
+            className={`min-h-[44px] border text-[11px] uppercase ${focus === i + 1 ? "border-blue text-ink bg-[#2A1208]" : "border-line-soft text-dim"}`}>
             <span className="font-pixel text-[8px] mr-1.5">{i + 1}</span>{t}
           </button>
         ))}
