@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: "NIGHTTERM - NSE terminal",
   description: "A keyboard-driven mini terminal for Indian markets. Delayed, unofficial data. Not investment advice.",
 };
-export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#0B0B0C" };
+export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#0E0607" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
