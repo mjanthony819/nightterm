@@ -400,3 +400,13 @@ def test_normalize_accepts_lowercase_suffix_and_display_strips_ns_only():
     assert universe.normalize("reliance.bo") == "RELIANCE.BO"
     assert universe.display("TCS.NS") == "TCS"
     assert universe.display("^NSEI") == "^NSEI"  # indices keep their caret
+
+
+def test_cache_evicts_locks_with_their_values():
+    c = TTLCache(max_items=4)
+    for i in range(5):
+        c.lock(f"k{i}")  # every key fetched at least once
+        c.put(f"k{i}", i)  # the 5th put evicts k0
+    assert "k0" not in c._locks  # was left behind before: _locks grew without bound
+    assert len(c._locks) == 4
+    assert c.lock("k1") is c.lock("k1")  # surviving keys keep reusing their lock
