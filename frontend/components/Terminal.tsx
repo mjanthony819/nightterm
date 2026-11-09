@@ -105,7 +105,12 @@ export default function Terminal() {
   const rows = useMemo(() => {
     const r = [...watch];
     if (sort === "sym") r.sort();
-    else if (sort !== "list") r.sort((a, b) => ((quotes[b]?.change_pct ?? -99) - (quotes[a]?.change_pct ?? -99)) * (sort === "pct_desc" ? 1 : -1));
+    else if (sort !== "list")
+      r.sort((a, b) => {
+        const x = quotes[a]?.change_pct, y = quotes[b]?.change_pct;
+        if (x == null || y == null) return Number(x == null) - Number(y == null);  // missing quotes always last
+        return (y - x) * (sort === "pct_desc" ? 1 : -1);
+      });
     return r;
   }, [watch, sort, quotes]);
 
