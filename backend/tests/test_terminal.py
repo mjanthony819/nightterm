@@ -292,6 +292,23 @@ def test_parse_quote_sums_intraday_volume_when_meta_volume_missing():
     assert yahoo.parse_quote(p2, "X.NS")["volume"] is None
 
 
+def test_fetch_history_fills_pending_slot_only_for_daily_ranges():
+    daily = {"chart": {"result": [{"meta": {"gmtoffset": 0}, "timestamp": [100, 200], "indicators": {"quote": [{
+        "open": [1, None], "high": [2, None], "low": [1, None], "close": [2, None], "volume": [5, None]}]}}]}}
+    intra = {"chart": {"result": [{"meta": {}, "timestamp": [1, 2], "indicators": {"quote": [{
+        "open": [10, 11], "high": [12, 15], "low": [9, 10], "close": [11, 14], "volume": [3, 4]}]}}]}}
+    # 6M: the pending daily slot is filled from the intraday session
+    client = _FlakyClient([_Resp(200, daily), _Resp(200, intra)])
+    out = asyncio.run(yahoo.fetch_history(client, "TCS.NS", "6M"))
+    assert len(client.urls) == 2
+    assert out["bars"][-1] == {"t": 200, "o": 10, "h": 15, "l": 9, "c": 14, "v": 7}
+    # 5Y bars are weekly: filling the pending slot from one 5-minute session would fabricate a
+    # wrong bar, so the intraday call is not made
+    client = _FlakyClient([_Resp(200, daily)])
+    out = asyncio.run(yahoo.fetch_history(client, "TCS.NS", "5Y"))
+    assert len(client.urls) == 1 and len(out["bars"]) == 1
+
+
 def test_bar_from_intraday_returns_none_when_every_row_is_null():
     p = {"chart": {"result": [{"meta": {}, "timestamp": [1, 2], "indicators": {"quote": [{
         "open": [None, None], "high": [None, None], "low": [None, None],
