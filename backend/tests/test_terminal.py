@@ -309,6 +309,22 @@ def test_fetch_history_fills_pending_slot_only_for_daily_ranges():
     assert len(client.urls) == 1 and len(out["bars"]) == 1
 
 
+def test_fetch_history_skips_fill_for_intraday_and_finished_days():
+    # a pending slot on an intraday range is just the in-progress session: filling it
+    # would append a daily-grain bar to a 5-minute series
+    intra = {"chart": {"result": [{"meta": {"gmtoffset": 0}, "timestamp": [100, 200], "indicators": {"quote": [{
+        "open": [1, None], "high": [2, None], "low": [1, None], "close": [2, None], "volume": [5, None]}]}}]}}
+    client = _FlakyClient([_Resp(200, intra)])
+    out = asyncio.run(yahoo.fetch_history(client, "TCS.NS", "1D"))
+    assert len(client.urls) == 1 and len(out["bars"]) == 1
+    # a finished day has no pending slot, so no intraday top-up request is made at all
+    complete = {"chart": {"result": [{"meta": {"gmtoffset": 0}, "timestamp": [100, 200], "indicators": {"quote": [{
+        "open": [1, 3], "high": [2, 4], "low": [1, 3], "close": [2, 4], "volume": [5, 6]}]}}]}}
+    client = _FlakyClient([_Resp(200, complete)])
+    out = asyncio.run(yahoo.fetch_history(client, "TCS.NS", "6M"))
+    assert len(client.urls) == 1 and [b["c"] for b in out["bars"]] == [2, 4]
+
+
 def test_bar_from_intraday_returns_none_when_every_row_is_null():
     p = {"chart": {"result": [{"meta": {}, "timestamp": [1, 2], "indicators": {"quote": [{
         "open": [None, None], "high": [None, None], "low": [None, None],
