@@ -64,9 +64,9 @@ export default function ChartPanel({ symbol, range, onRange, quote, tick, onWake
     setLoading(true); setErr(null);
     const slow = setTimeout(() => onWake(true), 2500);
     getHistory(symbol, range, ctl.signal)
-      .then((h) => { setHist(h); onWake(false); })
+      .then((h) => { setHist(h); })
       .catch((e) => { if (e?.name !== "AbortError") { setErr(e.message === "Failed to fetch" ? "Cannot reach the API." : e.message); setHist(null); } })
-      .finally(() => { clearTimeout(slow); if (!ctl.signal.aborted) setLoading(false); });
+      .finally(() => { clearTimeout(slow); onWake(false); if (!ctl.signal.aborted) setLoading(false); });
     return () => { ctl.abort(); clearTimeout(slow); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [symbol, range, tick]);
