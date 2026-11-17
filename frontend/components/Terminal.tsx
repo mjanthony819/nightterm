@@ -75,9 +75,9 @@ export default function Terminal() {
       const slow = setTimeout(() => setWaking(true), 2500);
       getQuotes(allSyms, ctl.signal).then((r) => {
         setQuotes((prev) => { const n = { ...prev }; r.quotes.forEach((q) => (n[q.symbol] = q)); return n; });
-        setAsof(r.asof); setQErr(null); setWaking(false);
+        setAsof(r.asof); setQErr(null);
       }).catch((e) => { if (e?.name !== "AbortError") setQErr(e.message === "Failed to fetch" ? "Cannot reach the API." : e.message); })
-        .finally(() => { clearTimeout(slow); first = false; setQLoading(false); });
+        .finally(() => { clearTimeout(slow); setWaking(false); first = false; setQLoading(false); });
     };
     load();
     const i = setInterval(() => { if (!document.hidden) load(); }, 60000);
