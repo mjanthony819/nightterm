@@ -116,7 +116,7 @@ export default function Terminal() {
 
   const movers = useMemo(() => {
     const q = watch.map((s) => quotes[s]).filter((x): x is Quote => !!x && x.change_pct != null).sort((a, b) => (b.change_pct as number) - (a.change_pct as number));
-    return { up: q.slice(0, 5), down: q.slice(-5).reverse().filter((x) => (x.change_pct as number) < 0) };
+    return { up: q.slice(0, 5).filter((x) => (x.change_pct as number) > 0), down: q.slice(-5).reverse().filter((x) => (x.change_pct as number) < 0) };
   }, [watch, quotes]);
 
   const select = useCallback((s: string) => { setSelected(norm(s)); }, []);
